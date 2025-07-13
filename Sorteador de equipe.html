@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteador de Equipes</title>
+    <style>
+        body {
+            background: #181818;
+            color: #f0f0f0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 24px;
+        }
+        .categorias {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin: 32px 0 16px 0;
+        }
+        .categoria {
+            background: #232323;
+            border-radius: 12px;
+            padding: 24px 16px;
+            min-width: 220px;
+            max-width: 320px;
+            width: 100%;
+            box-shadow: 0 2px 8px #0002;
+        }
+        .categoria h2 {
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            background: #2c2c2c;
+            color: #f0f0f0;
+        }
+        .input-row button {
+            background: #444;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .input-row button:hover {
+            background: #666;
+        }
+        .nomes-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-width: 288px;
+            width: 100%;
+        }
+        .nome-tag {
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nome-tag.programador { background: #2d6cdf; }
+        .nome-tag.artista { background: #e67e22; }
+        .nome-tag.sonoplasta { background: #16a085; }
+        .nome-tag .remove {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+        .sortear-btn {
+            display: block;
+            margin: 32px auto 0 auto;
+            background: linear-gradient(90deg,#2d6cdf,#e67e22,#16a085);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 32px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px #0003;
+            transition: background 0.2s;
+        }
+        .sortear-btn:hover {
+            filter: brightness(1.1);
+        }
+        .equipes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+            margin: 40px 0 32px 0;
+        }
+        .equipe-card {
+            background: #232323;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #0002;
+            min-width: 220px;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .equipe-card h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .equipe-membro {
+            margin-bottom: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: 500;
+            display: block;
+        }
+        .equipe-membro.programador { background: #2d6cdf; }
+        .equipe-membro.artista { background: #e67e22; }
+        .equipe-membro.sonoplasta { background: #16a085; }
+    </style>
+</head>
+<body>
+    <h1>Sorteador de Equipes</h1>
+    <div style="display:flex;justify-content:center;margin-bottom:24px;">
+        <div style="background:#232323;padding:18px 24px;border-radius:12px;box-shadow:0 2px 8px #0002;display:flex;align-items:center;gap:12px;">
+            <label for="input-max-membros" style="font-size:1.1em;font-weight:500;">Mínimo de membros por equipe:</label>
+            <input type="number" id="input-max-membros" min="2" max="99" value="3" style="width:60px;padding:6px 8px;border-radius:6px;border:none;background:#2c2c2c;color:#f0f0f0;font-size:1em;">
+        </div>
+    </div>
+    <div class="categorias">
+        <div class="categoria" id="cat-programador">
+            <h2>Programador</h2>
+            <div class="input-row">
+                <input type="text" id="input-programador" placeholder="Adicionar nome...">
+                <button onclick="adicionarNome('programador')">Adicionar</button>
+            </div>
+            <div class="nomes-list" id="list-programador"></div>
+        </div>
+        <div class="categoria" id="cat-artista">
+            <h2>Artista</h2>
+            <div class="input-row">
+                <input type="text" id="input-artista" placeholder="Adicionar nome...">
+                <button onclick="adicionarNome('artista')">Adicionar</button>
+            </div>
+            <div class="nomes-list" id="list-artista"></div>
+        </div>
+        <div class="categoria" id="cat-sonoplasta">
+            <h2>Sonoplasta</h2>
+            <div class="input-row">
+                <input type="text" id="input-sonoplasta" placeholder="Adicionar nome...">
+                <button onclick="adicionarNome('sonoplasta')">Adicionar</button>
+            </div>
+            <div class="nomes-list" id="list-sonoplasta"></div>
+        </div>
+    </div>
+    <button class="sortear-btn" onclick="sortearEquipes()">Sortear Equipes</button>
+    <button class="sortear-btn" style="margin-top:16px;background:#16a085;" onclick="exportarExcel()">Exportar para Excel</button>
+    <div class="equipes" id="equipes"></div>
+    <footer style="position:fixed;bottom:12px;right:18px;color:#888;font-size:1em;z-index:10;pointer-events:none;user-select:none;">Made by Prof Bruno Martins</footer>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        // Adiciona evento de Enter para cada input
+        ['programador','artista','sonoplasta'].forEach(cat => {
+            document.addEventListener('DOMContentLoaded', function() {
+                const input = document.getElementById('input-' + cat);
+                if (input) {
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            adicionarNome(cat);
+                        }
+                    });
+                }
+            });
+        });
+        const nomes = {
+            programador: [],
+            artista: [],
+            sonoplasta: []
+        };
+        function adicionarNome(cat) {
+            const input = document.getElementById('input-' + cat);
+            const nome = input.value.trim();
+            if (!nome) return;
+            nomes[cat].push(nome);
+            input.value = '';
+            renderNomes();
+        }
+        function removerNome(cat, idx) {
+            nomes[cat].splice(idx, 1);
+            renderNomes();
+        }
+        function renderNomes() {
+            ['programador','artista','sonoplasta'].forEach(cat => {
+                const list = document.getElementById('list-' + cat);
+                list.innerHTML = '';
+                nomes[cat].forEach((nome, idx) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'nome-tag ' + cat;
+                    tag.innerHTML = `${nome} <button class='remove' onclick="removerNome('${cat}',${idx})">&times;</button>`;
+                    list.appendChild(tag);
+                });
+            });
+        }
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+        function sortearEquipes() {
+            const minPorEquipe = parseInt(document.getElementById('input-max-membros').value) || 3;
+            const cats = ['programador','artista','sonoplasta'];
+            // Junta todos os membros
+            let todosMembros = [];
+            cats.forEach(cat => {
+                nomes[cat].forEach(nome => {
+                    todosMembros.push({nome, funcao: cat});
+                });
+            });
+            if (todosMembros.length < minPorEquipe) {
+                alert('Adicione pelo menos ' + minPorEquipe + ' nomes no total!');
+                return;
+            }
+            // Descobre a categoria com mais membros e a com menos membros
+            let maiorCat = cats[0];
+            let menorCat = cats[0];
+            cats.forEach(cat => {
+                if (nomes[cat].length > nomes[maiorCat].length) maiorCat = cat;
+                if (nomes[cat].length < nomes[menorCat].length) menorCat = cat;
+            });
+            // Embaralha todos os membros
+            shuffle(todosMembros);
+            // Calcula o máximo de equipes possíveis com o mínimo por equipe
+            let numEquipes = Math.floor(todosMembros.length / minPorEquipe);
+            if (numEquipes === 0) numEquipes = 1;
+            // Garante pelo menos 1 do maiorCat em cada equipe
+            let membrosMaiorCat = [...nomes[maiorCat]];
+            shuffle(membrosMaiorCat);
+            if (membrosMaiorCat.length < numEquipes) numEquipes = membrosMaiorCat.length;
+            let equipes = Array.from({length: numEquipes}, () => []);
+            // Adiciona 1 do maiorCat em cada equipe
+            for (let i = 0; i < numEquipes; i++) {
+                equipes[i].push({nome: membrosMaiorCat[i], funcao: maiorCat});
+            }
+            // Remove esses membros do todosMembros
+            todosMembros = todosMembros.filter(m => !(m.funcao === maiorCat && membrosMaiorCat.slice(0, numEquipes).includes(m.nome)));
+            // Preenche cada equipe até o mínimo, respeitando a regra do menorCat
+            let idx = 0;
+            while (todosMembros.length > 0 && equipes.some(eq => eq.length < minPorEquipe)) {
+                for (let i = 0; i < numEquipes; i++) {
+                    if (equipes[i].length < minPorEquipe && todosMembros.length > 0) {
+                        // Não repetir menorCat na mesma equipe
+                        if (todosMembros[0].funcao === menorCat && equipes[i].some(m => m.funcao === menorCat)) {
+                            let foundIdx = todosMembros.findIndex(m => m.funcao !== menorCat || !equipes[i].some(e => e.funcao === menorCat));
+                            if (foundIdx === -1) continue;
+                            let membro = todosMembros.splice(foundIdx, 1)[0];
+                            equipes[i].push(membro);
+                        } else {
+                            equipes[i].push(todosMembros.shift());
+                        }
+                    }
+                }
+            }
+            // Distribui excedentes (pode passar do mínimo)
+            idx = 0;
+            while (todosMembros.length > 0) {
+                if (todosMembros[0].funcao === menorCat && equipes[idx % numEquipes].some(m => m.funcao === menorCat)) {
+                    let foundIdx = todosMembros.findIndex(m => m.funcao !== menorCat || !equipes[idx % numEquipes].some(e => e.funcao === menorCat));
+                    if (foundIdx === -1) {
+                        idx++;
+                        continue;
+                    }
+                    let membro = todosMembros.splice(foundIdx, 1)[0];
+                    equipes[idx % numEquipes].push(membro);
+                } else {
+                    equipes[idx % numEquipes].push(todosMembros.shift());
+                }
+                idx++;
+            }
+            renderEquipes(equipes);
+        }
+        function exportarExcel() {
+            if (!window.ultimaEquipes || !Array.isArray(window.ultimaEquipes) || window.ultimaEquipes.length === 0) {
+                alert('Primeiro sorteie as equipes!');
+                return;
+            }
+            const XLSX = window.XLSX;
+            const wb = XLSX.utils.book_new();
+            let ws_data = [["Equipe","Nome","Função"]];
+            window.ultimaEquipes.forEach((eq, idx) => {
+                eq.forEach(membro => {
+                    ws_data.push([`Equipe ${idx+1}`, membro.nome, capitalize(membro.funcao)]);
+                });
+            });
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            // Cores
+            for(let r=1;r<ws_data.length;r++){
+                let cor = membroCor(ws_data[r][2]);
+                if(ws[`B${r+1}`]) ws[`B${r+1}`].s = {fill:{fgColor:{rgb:cor}}};
+                if(ws[`C${r+1}`]) ws[`C${r+1}`].s = {fill:{fgColor:{rgb:cor}}};
+            }
+            XLSX.utils.book_append_sheet(wb, ws, 'Equipes');
+            XLSX.writeFile(wb, 'equipes.xlsx');
+        }
+        function membroCor(funcao) {
+            switch(funcao.toLowerCase()){
+                case 'programador': return '2D6CDF';
+                case 'artista': return 'E67E22';
+                case 'sonoplasta': return '16A085';
+                default: return '232323';
+            }
+        }
+        function renderEquipes(equipes) {
+            window.ultimaEquipes = equipes;
+            const container = document.getElementById('equipes');
+            container.innerHTML = '';
+            equipes.forEach((eq, i) => {
+                const card = document.createElement('div');
+                card.className = 'equipe-card';
+                card.innerHTML = `<h3>Equipe ${i+1}</h3>`;
+                eq.forEach(membro => {
+                    const tag = document.createElement('div');
+                    tag.className = 'equipe-membro ' + membro.funcao;
+                    tag.textContent = `${membro.nome} - ${capitalize(membro.funcao)}`;
+                    card.appendChild(tag);
+                });
+                container.appendChild(card);
+            });
+        }
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+    </script>
+</body>
+</html>
