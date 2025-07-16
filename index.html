@@ -17,10 +17,14 @@
             margin-top: 24px;
         }
         .categorias {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(220px, 1fr));
             justify-content: center;
+            margin: 32px auto 16px auto;
+            max-width: 1024px;
             gap: 32px;
-            margin: 32px 0 16px 0;
+            column-gap: 60px;
+            
         }
         .categoria {
             background: #232323;
@@ -148,80 +152,150 @@
             <input type="number" id="input-max-membros" min="2" max="99" value="3" style="width:60px;padding:6px 8px;border-radius:6px;border:none;background:#2c2c2c;color:#f0f0f0;font-size:1em;">
         </div>
     </div>
-    <div class="categorias">
-        <div class="categoria" id="cat-programador">
-            <h2>Programador</h2>
-            <div class="input-row">
-                <input type="text" id="input-programador" placeholder="Adicionar nome...">
-                <button onclick="adicionarNome('programador')">Adicionar</button>
-            </div>
-            <div class="nomes-list" id="list-programador"></div>
-        </div>
-        <div class="categoria" id="cat-artista">
-            <h2>Artista</h2>
-            <div class="input-row">
-                <input type="text" id="input-artista" placeholder="Adicionar nome...">
-                <button onclick="adicionarNome('artista')">Adicionar</button>
-            </div>
-            <div class="nomes-list" id="list-artista"></div>
-        </div>
-        <div class="categoria" id="cat-sonoplasta">
-            <h2>Sonoplasta</h2>
-            <div class="input-row">
-                <input type="text" id="input-sonoplasta" placeholder="Adicionar nome...">
-                <button onclick="adicionarNome('sonoplasta')">Adicionar</button>
-            </div>
-            <div class="nomes-list" id="list-sonoplasta"></div>
+    <div style="display:flex;justify-content:center;margin-bottom:16px;">
+        <div style="background:#232323;padding:14px 18px;border-radius:12px;box-shadow:0 2px 8px #0002;display:flex;align-items:center;gap:10px;">
+            <input type="text" id="input-nova-categoria" placeholder="Nova categoria..." style="padding:8px;border-radius:6px;border:none;background:#2c2c2c;color:#f0f0f0;font-size:1em;">
+            <input type="color" id="input-cor-categoria" value="#2d6cdf" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;">
+            <button onclick="adicionarCategoria()" style="background:#2d6cdf;color:#fff;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;">Adicionar Categoria</button>
         </div>
     </div>
+    <div class="categorias" id="categorias"></div>
     <button class="sortear-btn" onclick="sortearEquipes()">Sortear Equipes</button>
     <button class="sortear-btn" style="margin-top:16px;background:#16a085;" onclick="exportarExcel()">Exportar para Excel</button>
     <div class="equipes" id="equipes"></div>
     <footer style="position:fixed;bottom:12px;right:18px;color:#888;font-size:1em;z-index:10;pointer-events:none;user-select:none;">Made by Prof Bruno Martins</footer>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
-        // Adiciona evento de Enter para cada input
-        ['programador','artista','sonoplasta'].forEach(cat => {
-            document.addEventListener('DOMContentLoaded', function() {
-                const input = document.getElementById('input-' + cat);
-                if (input) {
-                    input.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter') {
-                            adicionarNome(cat);
-                        }
-                    });
-                }
-            });
-        });
-        const nomes = {
+        // Categorias dinâmicas
+        let categorias = [
+            { nome: 'Programador', id: 'programador', cor: '#2d6cdf' },
+            { nome: 'Artista', id: 'artista', cor: '#e67e22' },
+            { nome: 'Sonoplasta', id: 'sonoplasta', cor: '#16a085' }
+        ];
+        let nomes = {
             programador: [],
             artista: [],
             sonoplasta: []
         };
+
+        // Lista de cores bem distintas
+        const coresDistintas = [
+            '#2d6cdf', '#e67e22', '#16a085', '#e74c3c', '#8e44ad', '#f1c40f', '#27ae60', '#34495e', '#fd79a8', '#00b894', '#636e72', '#fdcb6e', '#00cec9', '#d35400', '#6c5ce7', '#00a8ff', '#9b59b6', '#e17055', '#0984e3', '#b2bec3'
+        ];
+        // Não será mais usada, cor será escolhida pelo usuário
+        function adicionarCategoria() {
+            const input = document.getElementById('input-nova-categoria');
+            let nome = input.value.trim();
+            if (!nome) return;
+            // Gera id único
+            let id = nome.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'');
+            if (!id) id = 'cat' + Math.floor(Math.random()*10000);
+            if (categorias.some(c => c.id === id)) {
+                alert('Já existe uma categoria com esse nome!');
+                return;
+            }
+            const corInput = document.getElementById('input-cor-categoria');
+            let cor = corInput ? corInput.value : '#232323';
+            categorias.push({ nome, id, cor });
+            nomes[id] = [];
+            input.value = '';
+            corInput.value = '#2d6cdf';
+            renderCategorias();
+            input.focus();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCategorias();
+            // Adiciona evento de ENTER para criar categoria
+            const inputCat = document.getElementById('input-nova-categoria');
+            if (inputCat) {
+                inputCat.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') adicionarCategoria();
+                });
+            }
+        });
+        function removerCategoria(id) {
+            if (categorias.length <= 1) {
+                alert('Deve haver pelo menos uma categoria.');
+                return;
+            }
+            categorias = categorias.filter(c => c.id !== id);
+            delete nomes[id];
+            renderCategorias();
+        }
         function adicionarNome(cat) {
             const input = document.getElementById('input-' + cat);
             const nome = input.value.trim();
             if (!nome) return;
             nomes[cat].push(nome);
             input.value = '';
-            renderNomes();
+            // Salva id do input para manter foco após render
+            window._inputFocoCategoria = cat;
+            renderCategorias();
         }
         function removerNome(cat, idx) {
             nomes[cat].splice(idx, 1);
-            renderNomes();
+            renderCategorias();
         }
-        function renderNomes() {
-            ['programador','artista','sonoplasta'].forEach(cat => {
-                const list = document.getElementById('list-' + cat);
+        function renderCategorias() {
+            const container = document.getElementById('categorias');
+            container.innerHTML = '';
+            categorias.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'categoria';
+                div.id = 'cat-' + cat.id;
+                div.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span style="display:inline-block;width:22px;height:22px;border-radius:6px;background:${cat.cor};border:2px solid #444;"></span>
+                            <h2 style="margin:0;">${cat.nome}</h2>
+                        </div>
+                        <button onclick="removerCategoria('${cat.id}')" style="background:none;border:none;color:#888;font-size:18px;cursor:pointer;">&times;</button>
+                    </div>
+                    <div class="input-row">
+                        <input type="text" id="input-${cat.id}" placeholder="Adicionar nome...">
+                        <button id="btn-add-${cat.id}">Adicionar</button>
+                    </div>
+                    <div class="nomes-list" id="list-${cat.id}"></div>
+                `;
+                container.appendChild(div);
+                // Adiciona evento de Enter e botão
+                setTimeout(() => {
+                    const input = document.getElementById('input-' + cat.id);
+                    const btn = document.getElementById('btn-add-' + cat.id);
+                    if (input && !input._enterBound) {
+                        input.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                                adicionarNome(cat.id);
+                            }
+                        });
+                        input._enterBound = true;
+                    }
+                    if (btn && !btn._clickBound) {
+                        btn.addEventListener('click', function() {
+                            adicionarNome(cat.id);
+                            input && input.focus();
+                        });
+                        btn._clickBound = true;
+                    }
+                    // Mantém o foco se foi salvo
+                    if (window._inputFocoCategoria === cat.id) {
+                        input && input.focus();
+                        window._inputFocoCategoria = null;
+                    }
+                }, 0);
+                // Render nomes
+                const list = document.getElementById('list-' + cat.id);
                 list.innerHTML = '';
-                nomes[cat].forEach((nome, idx) => {
+                nomes[cat.id].forEach((nome, idx) => {
                     const tag = document.createElement('span');
-                    tag.className = 'nome-tag ' + cat;
-                    tag.innerHTML = `${nome} <button class='remove' onclick="removerNome('${cat}',${idx})">&times;</button>`;
+                    tag.className = 'nome-tag';
+                    tag.style.background = cat.cor;
+                    tag.innerHTML = `${nome} <button class='remove' onclick="removerNome('${cat.id}',${idx})">&times;</button>`;
                     list.appendChild(tag);
                 });
             });
         }
+        document.addEventListener('DOMContentLoaded', renderCategorias);
         function shuffle(arr) {
             for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -230,7 +304,7 @@
         }
         function sortearEquipes() {
             const minPorEquipe = parseInt(document.getElementById('input-max-membros').value) || 3;
-            const cats = ['programador','artista','sonoplasta'];
+            const cats = categorias.map(c => c.id);
             // Junta todos os membros
             let todosMembros = [];
             cats.forEach(cat => {
@@ -307,29 +381,41 @@
             }
             const XLSX = window.XLSX;
             const wb = XLSX.utils.book_new();
-            let ws_data = [["Equipe","Nome","Função"]];
-            window.ultimaEquipes.forEach((eq, idx) => {
-                eq.forEach(membro => {
-                    ws_data.push([`Equipe ${idx+1}`, membro.nome, capitalize(membro.funcao)]);
-                });
-            });
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            // Cores
-            for(let r=1;r<ws_data.length;r++){
-                let cor = membroCor(ws_data[r][2]);
-                if(ws[`B${r+1}`]) ws[`B${r+1}`].s = {fill:{fgColor:{rgb:cor}}};
-                if(ws[`C${r+1}`]) ws[`C${r+1}`].s = {fill:{fgColor:{rgb:cor}}};
+            let numEquipes = window.ultimaEquipes.length;
+            let maxMembros = Math.max(...window.ultimaEquipes.map(eq => eq.length));
+            let ws_data = [];
+            // Monta cabeçalho com espaçadores
+            let header = [];
+            for (let i = 0; i < numEquipes; i++) {
+                header.push(`Equipe ${i+1}`);
+                if (i < numEquipes - 1) header.push(""); // espaçador
             }
+            ws_data.push(header);
+            // Monta linhas de membros
+            for (let row = 0; row < maxMembros; row++) {
+                let linha = [];
+                for (let i = 0; i < numEquipes; i++) {
+                    let membro = window.ultimaEquipes[i][row];
+                    if (membro) {
+                        let cat = categorias.find(c => c.id === membro.funcao);
+                        let funcaoNome = cat ? cat.nome : capitalize(membro.funcao);
+                        linha.push(`${membro.nome} - ${funcaoNome}`);
+                    } else {
+                        linha.push("");
+                    }
+                    if (i < numEquipes - 1) linha.push(""); // espaçador
+                }
+                ws_data.push(linha);
+            }
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
             XLSX.utils.book_append_sheet(wb, ws, 'Equipes');
             XLSX.writeFile(wb, 'equipes.xlsx');
         }
         function membroCor(funcao) {
-            switch(funcao.toLowerCase()){
-                case 'programador': return '2D6CDF';
-                case 'artista': return 'E67E22';
-                case 'sonoplasta': return '16A085';
-                default: return '232323';
-            }
+            // Procura cor na lista de categorias
+            let cat = categorias.find(c => c.id === funcao);
+            if (cat && cat.cor) return cat.cor.replace('#','');
+            return '232323';
         }
         function renderEquipes(equipes) {
             window.ultimaEquipes = equipes;
@@ -339,10 +425,36 @@
                 const card = document.createElement('div');
                 card.className = 'equipe-card';
                 card.innerHTML = `<h3>Equipe ${i+1}</h3>`;
-                eq.forEach(membro => {
+                card.dataset.equipeIdx = i;
+                // Dragover e drop para aceitar membros
+                card.ondragover = function(e) { e.preventDefault(); card.style.boxShadow = '0 0 0 3px #2d6cdf'; };
+                card.ondragleave = function(e) { card.style.boxShadow = ''; };
+                card.ondrop = function(e) {
+                    e.preventDefault();
+                    card.style.boxShadow = '';
+                    const data = e.dataTransfer.getData('text/plain');
+                    if (!data) return;
+                    const [fromEquipe, membroIdx] = data.split(':').map(Number);
+                    if (fromEquipe === i) return;
+                    // Move membro
+                    const membro = window.ultimaEquipes[fromEquipe][membroIdx];
+                    window.ultimaEquipes[fromEquipe].splice(membroIdx, 1);
+                    window.ultimaEquipes[i].push(membro);
+                    renderEquipes(window.ultimaEquipes);
+                };
+                eq.forEach((membro, idxMembro) => {
+                    let cat = categorias.find(c => c.id === membro.funcao);
                     const tag = document.createElement('div');
-                    tag.className = 'equipe-membro ' + membro.funcao;
-                    tag.textContent = `${membro.nome} - ${capitalize(membro.funcao)}`;
+                    tag.className = 'equipe-membro';
+                    tag.style.background = cat ? cat.cor : '#232323';
+                    tag.textContent = `${membro.nome} - ${cat ? cat.nome : capitalize(membro.funcao)}`;
+                    // Drag & drop
+                    tag.draggable = true;
+                    tag.ondragstart = function(e) {
+                        e.dataTransfer.setData('text/plain', `${i}:${idxMembro}`);
+                        setTimeout(() => tag.style.opacity = 0.5, 0);
+                    };
+                    tag.ondragend = function(e) { tag.style.opacity = 1; };
                     card.appendChild(tag);
                 });
                 container.appendChild(card);
