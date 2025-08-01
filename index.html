@@ -344,14 +344,19 @@
             while (todosMembros.length > 0 && equipes.some(eq => eq.length < minPorEquipe)) {
                 for (let i = 0; i < numEquipes; i++) {
                     if (equipes[i].length < minPorEquipe && todosMembros.length > 0) {
-                        // Não repetir menorCat na mesma equipe
-                        if (todosMembros[0].funcao === menorCat && equipes[i].some(m => m.funcao === menorCat)) {
-                            let foundIdx = todosMembros.findIndex(m => m.funcao !== menorCat || !equipes[i].some(e => e.funcao === menorCat));
-                            if (foundIdx === -1) continue;
-                            let membro = todosMembros.splice(foundIdx, 1)[0];
-                            equipes[i].push(membro);
-                        } else {
+                        // Se há apenas uma categoria, distribui normalmente
+                        if (categorias.length === 1) {
                             equipes[i].push(todosMembros.shift());
+                        } else {
+                            // Não repetir menorCat na mesma equipe
+                            if (todosMembros[0].funcao === menorCat && equipes[i].some(m => m.funcao === menorCat)) {
+                                let foundIdx = todosMembros.findIndex(m => m.funcao !== menorCat || !equipes[i].some(e => e.funcao === menorCat));
+                                if (foundIdx === -1) continue;
+                                let membro = todosMembros.splice(foundIdx, 1)[0];
+                                equipes[i].push(membro);
+                            } else {
+                                equipes[i].push(todosMembros.shift());
+                            }
                         }
                     }
                 }
@@ -359,7 +364,10 @@
             // Distribui excedentes (pode passar do mínimo)
             idx = 0;
             while (todosMembros.length > 0) {
-                if (todosMembros[0].funcao === menorCat && equipes[idx % numEquipes].some(m => m.funcao === menorCat)) {
+                // Se há apenas uma categoria, distribui normalmente
+                if (categorias.length === 1) {
+                    equipes[idx % numEquipes].push(todosMembros.shift());
+                } else if (todosMembros[0].funcao === menorCat && equipes[idx % numEquipes].some(m => m.funcao === menorCat)) {
                     let foundIdx = todosMembros.findIndex(m => m.funcao !== menorCat || !equipes[idx % numEquipes].some(e => e.funcao === menorCat));
                     if (foundIdx === -1) {
                         idx++;
