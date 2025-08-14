@@ -341,7 +341,19 @@
             todosMembros = todosMembros.filter(m => !(m.funcao === maiorCat && membrosMaiorCat.slice(0, numEquipes).includes(m.nome)));
             // Preenche cada equipe até o mínimo, respeitando a regra do menorCat
             let idx = 0;
+            let loopSafety1 = 0;
             while (todosMembros.length > 0 && equipes.some(eq => eq.length < minPorEquipe)) {
+                loopSafety1++;
+                if (loopSafety1 > todosMembros.length * numEquipes) {
+                    // Proteção contra loop infinito - força distribuição
+                    for (let i = 0; i < numEquipes && todosMembros.length > 0; i++) {
+                        if (equipes[i].length < minPorEquipe) {
+                            equipes[i].push(todosMembros.shift());
+                        }
+                    }
+                    break;
+                }
+                
                 for (let i = 0; i < numEquipes; i++) {
                     if (equipes[i].length < minPorEquipe && todosMembros.length > 0) {
                         // Se há apenas uma categoria, distribui normalmente
@@ -351,9 +363,13 @@
                             // Não repetir menorCat na mesma equipe
                             if (todosMembros[0].funcao === menorCat && equipes[i].some(m => m.funcao === menorCat)) {
                                 let foundIdx = todosMembros.findIndex(m => m.funcao !== menorCat || !equipes[i].some(e => e.funcao === menorCat));
-                                if (foundIdx === -1) continue;
-                                let membro = todosMembros.splice(foundIdx, 1)[0];
-                                equipes[i].push(membro);
+                                if (foundIdx === -1) {
+                                    // Se não encontrou, força a distribuição para evitar loop infinito
+                                    equipes[i].push(todosMembros.shift());
+                                } else {
+                                    let membro = todosMembros.splice(foundIdx, 1)[0];
+                                    equipes[i].push(membro);
+                                }
                             } else {
                                 equipes[i].push(todosMembros.shift());
                             }
@@ -363,18 +379,30 @@
             }
             // Distribui excedentes (pode passar do mínimo)
             idx = 0;
+            let loopSafety = 0;
             while (todosMembros.length > 0) {
+                loopSafety++;
+                if (loopSafety > todosMembros.length * numEquipes * 2) {
+                    // Proteção contra loop infinito - distribui forçadamente
+                    while (todosMembros.length > 0) {
+                        equipes[idx % numEquipes].push(todosMembros.shift());
+                        idx++;
+                    }
+                    break;
+                }
+                
                 // Se há apenas uma categoria, distribui normalmente
                 if (categorias.length === 1) {
                     equipes[idx % numEquipes].push(todosMembros.shift());
                 } else if (todosMembros[0].funcao === menorCat && equipes[idx % numEquipes].some(m => m.funcao === menorCat)) {
                     let foundIdx = todosMembros.findIndex(m => m.funcao !== menorCat || !equipes[idx % numEquipes].some(e => e.funcao === menorCat));
                     if (foundIdx === -1) {
-                        idx++;
-                        continue;
+                        // Se não encontrou nenhum membro adequado, força a distribuição
+                        equipes[idx % numEquipes].push(todosMembros.shift());
+                    } else {
+                        let membro = todosMembros.splice(foundIdx, 1)[0];
+                        equipes[idx % numEquipes].push(membro);
                     }
-                    let membro = todosMembros.splice(foundIdx, 1)[0];
-                    equipes[idx % numEquipes].push(membro);
                 } else {
                     equipes[idx % numEquipes].push(todosMembros.shift());
                 }
